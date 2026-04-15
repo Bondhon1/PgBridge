@@ -1,2 +1,5 @@
 @echo off
-"C:\Program Files\PostgreSQL\17\bin\pg_restore.exe" %*
+setlocal
+set "BIN=%~dp0bin"
+set "PATH=%BIN%;%PATH%"
+"%BIN%\pg_restore.exe" %*

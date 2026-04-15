@@ -1,8 +1,9 @@
-Place PostgreSQL binaries in this folder so the app can run without a system PostgreSQL install.
+This folder contains the portable PostgreSQL runtime used by PgBridge.
 
-Required binaries:
+Windows structure:
 
-- Windows: pg_dump.exe, pg_restore.exe
-- macOS/Linux: pg_dump, pg_restore
+- `pg_dump.exe.cmd` and `pg_restore.exe.cmd`: wrappers used by the app
+- `bin/pg_dump.exe`, `bin/pg_restore.exe`: bundled executables
+- `bin/*.dll`: runtime dependencies required by those executables
 
-These files are bundled into packaged builds via electron-builder extraResources.
+The wrappers execute binaries from this folder only, so migration works without a system PostgreSQL install.
