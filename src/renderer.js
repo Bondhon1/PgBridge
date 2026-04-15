@@ -1,24 +1,42 @@
 const sourceUrlInput = document.getElementById('sourceUrl');
 const targetUrlInput = document.getElementById('targetUrl');
 const migrateButton = document.getElementById('migrateButton');
+const stopButton = document.getElementById('stopButton');
+const clearButton = document.getElementById('clearButton');
 const statusText = document.getElementById('statusText');
 const statusLog = document.getElementById('statusLog');
 const progressBadge = document.getElementById('progressBadge');
-const warningModal = document.getElementById('warningModal');
+const progressLabel = document.getElementById('progressLabel');
+const progressFill = document.getElementById('progressFill');
+const confirmModal = document.getElementById('confirmModal');
+const confirmTitle = document.getElementById('confirmTitle');
+const confirmMessage = document.getElementById('confirmMessage');
 const confirmButton = document.getElementById('confirmButton');
 const cancelButton = document.getElementById('cancelButton');
 
 let pendingPayload = null;
+let pendingAction = null;
 let isRunning = false;
 
 function setRunningState(running) {
   isRunning = running;
   migrateButton.disabled = running;
+  stopButton.disabled = !running;
+  clearButton.disabled = running;
   sourceUrlInput.disabled = running;
   targetUrlInput.disabled = running;
 
   progressBadge.textContent = running ? 'Running' : 'Idle';
-  progressBadge.classList.toggle('progress-active', running);
+}
+
+function setStatusText(text, level = 'info') {
+  statusText.textContent = text;
+  statusText.className = `status-text status-${level}`;
+}
+
+function setProgress(value, label) {
+  progressFill.style.width = `${Math.max(0, Math.min(100, value))}%`;
+  progressLabel.textContent = label;
 }
 
 function appendStatus(status) {
@@ -32,17 +50,31 @@ function appendStatus(status) {
   statusLog.scrollTop = statusLog.scrollHeight;
 }
 
-function setStatusText(text, level = 'info') {
-  statusText.textContent = text;
-  statusText.className = `status-text status-${level}`;
+function openConfirmModal(action) {
+  pendingAction = action;
+
+  if (action === 'target-warning') {
+    confirmTitle.textContent = 'Target Database Is Not Empty';
+    confirmMessage.textContent = 'This will delete existing data on the target database. Continue?';
+    confirmButton.textContent = 'Continue';
+  } else if (action === 'stop') {
+    confirmTitle.textContent = 'Stop Migration';
+    confirmMessage.textContent = 'This will cancel the running migration. Any partial restore may remain. Continue?';
+    confirmButton.textContent = 'Stop now';
+  }
+
+  confirmModal.classList.add('visible');
 }
 
-function openWarningModal() {
-  warningModal.classList.add('visible');
+function closeConfirmModal() {
+  confirmModal.classList.remove('visible');
+  pendingAction = null;
 }
 
-function closeWarningModal() {
-  warningModal.classList.remove('visible');
+function clearFields() {
+  sourceUrlInput.value = '';
+  targetUrlInput.value = '';
+  setStatusText('Fields cleared.', 'info');
 }
 
 async function runMigration(force = false) {
@@ -54,20 +86,29 @@ async function runMigration(force = false) {
 
   pendingPayload = payload;
   setRunningState(true);
-  setStatusText('Working...', 'info');
+  setStatusText('Preparing migration...', 'info');
+  setProgress(1, 'Preparing migration');
 
   try {
     const result = await window.pgBridge.startMigration(payload);
 
+    if (result.cancelled) {
+      setStatusText(result.message || 'Migration cancelled.', 'warn');
+      setProgress(0, 'Cancelled');
+      return;
+    }
+
     if (result.needsConfirmation) {
       setRunningState(false);
       setStatusText('Target has existing data. Confirmation required.', 'warn');
-      openWarningModal();
+      setProgress(15, 'Target check complete');
+      openConfirmModal('target-warning');
       return;
     }
 
     if (result.ok) {
       setStatusText(result.message || 'Migration completed.', 'success');
+      setProgress(100, 'Completed');
       return;
     }
 
@@ -75,7 +116,7 @@ async function runMigration(force = false) {
   } catch (error) {
     setStatusText(`Unexpected error: ${error.message}`, 'error');
   } finally {
-    if (!warningModal.classList.contains('visible')) {
+    if (!confirmModal.classList.contains('visible')) {
       setRunningState(false);
     }
   }
@@ -85,22 +126,45 @@ migrateButton.addEventListener('click', () => {
   runMigration(false);
 });
 
-confirmButton.addEventListener('click', async () => {
-  closeWarningModal();
-
-  if (!pendingPayload) {
+stopButton.addEventListener('click', () => {
+  if (!isRunning) {
     return;
   }
 
-  await runMigration(true);
+  openConfirmModal('stop');
+});
+
+clearButton.addEventListener('click', () => {
+  clearFields();
+  setProgress(0, 'Ready');
+});
+
+confirmButton.addEventListener('click', async () => {
+  const action = pendingAction;
+  closeConfirmModal();
+
+  if (action === 'target-warning' && pendingPayload) {
+    await runMigration(true);
+    return;
+  }
+
+  if (action === 'stop') {
+    await window.pgBridge.cancelMigration();
+    setStatusText('Cancellation requested...', 'warn');
+  }
 });
 
 cancelButton.addEventListener('click', () => {
-  closeWarningModal();
-  setStatusText('Migration cancelled.', 'warn');
-  setRunningState(false);
+  closeConfirmModal();
+  if (isRunning) {
+    setStatusText('Migration continues.', 'info');
+  }
 });
 
 window.pgBridge.onStatus((status) => {
   appendStatus(status);
+});
+
+window.pgBridge.onProgress((progress) => {
+  setProgress(progress.value, progress.label);
 });

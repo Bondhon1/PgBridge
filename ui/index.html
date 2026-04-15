@@ -7,53 +7,89 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="bg-shape bg-shape-a"></div>
-    <div class="bg-shape bg-shape-b"></div>
+    <div class="grid-backdrop"></div>
 
-    <main class="panel">
-      <header class="panel-header">
-        <h1>PgBridge</h1>
-        <p>Migrate PostgreSQL data safely between environments.</p>
-      </header>
+    <main class="shell">
+      <aside class="brand-panel">
+        <div class="brand-mark-wrap">
+          <img class="brand-mark" src="../Untitled design.svg" alt="PgBridge logo" />
+        </div>
+        <div class="brand-copy">
+          <p class="eyebrow">PostgreSQL migration console</p>
+          <h1>PgBridge</h1>
+          <p class="lede">Transfer databases with bundled tooling, a sharp interface, and cancellation support.</p>
+        </div>
+        <div class="mini-stats">
+          <div>
+            <span>Mode</span>
+            <strong>Offline-ready</strong>
+          </div>
+          <div>
+            <span>Status</span>
+            <strong id="progressBadge">Idle</strong>
+          </div>
+        </div>
+      </aside>
 
-      <div class="field-grid">
-        <label class="field" for="sourceUrl">
-          <span>Source Database URL</span>
-          <input
-            id="sourceUrl"
-            type="password"
-            autocomplete="off"
-            placeholder="postgresql://user:password@host:5432/source_db"
-          />
-        </label>
+      <section class="workspace">
+        <header class="workspace-header">
+          <div>
+            <span class="section-kicker">Migration inputs</span>
+            <h2>Source and target URLs</h2>
+          </div>
+          <div class="toolbar">
+            <button id="clearButton" class="btn-ghost" type="button">Clear fields</button>
+            <button id="stopButton" class="btn-danger-outline" type="button" disabled>Stop</button>
+            <button id="migrateButton" class="btn-primary" type="button">Migrate</button>
+          </div>
+        </header>
 
-        <label class="field" for="targetUrl">
-          <span>Target Database URL</span>
-          <input
-            id="targetUrl"
-            type="password"
-            autocomplete="off"
-            placeholder="postgresql://user:password@host:5432/target_db"
-          />
-        </label>
-      </div>
+        <div class="field-grid">
+          <label class="field" for="sourceUrl">
+            <span>Source Database URL</span>
+            <input
+              id="sourceUrl"
+              type="password"
+              autocomplete="off"
+              placeholder="postgresql://user:password@host:5432/source_db?sslmode=require"
+            />
+          </label>
 
-      <div class="action-row">
-        <button id="migrateButton" type="button">Migrate</button>
-        <span id="progressBadge" class="progress-badge">Idle</span>
-      </div>
+          <label class="field" for="targetUrl">
+            <span>Target Database URL</span>
+            <input
+              id="targetUrl"
+              type="password"
+              autocomplete="off"
+              placeholder="postgresql://user:password@host:5432/target_db?sslmode=require"
+            />
+          </label>
+        </div>
 
-      <p id="statusText" class="status-text status-info">Ready.</p>
+        <section class="progress-panel">
+          <div class="progress-head">
+            <span>Progress</span>
+            <strong id="progressLabel">Ready.</strong>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </section>
 
-      <section id="statusLog" class="status-log" aria-live="polite"></section>
+        <section class="status-stack">
+          <p id="statusText" class="status-text status-info">Ready.</p>
+          <section id="statusLog" class="status-log" aria-live="polite"></section>
+        </section>
+      </section>
     </main>
 
-    <div id="warningModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
       <div class="modal-card">
-        <h2>Target Database Is Not Empty</h2>
-        <p>This operation will delete existing data on the target database. Continue?</p>
+        <p class="modal-kicker">Confirmation required</p>
+        <h2 id="confirmTitle">Target Database Is Not Empty</h2>
+        <p id="confirmMessage">This operation will delete existing data on the target database. Continue?</p>
         <div class="modal-actions">
-          <button id="cancelButton" class="btn-secondary" type="button">Cancel</button>
+          <button id="cancelButton" class="btn-ghost" type="button">Cancel</button>
           <button id="confirmButton" class="btn-danger" type="button">Continue</button>
         </div>
       </div>
