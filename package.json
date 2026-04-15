@@ -1,0 +1,49 @@
+{
+  "name": "pgbridge",
+  "version": "1.0.0",
+  "description": "Offline-ready PostgreSQL migration desktop tool",
+  "main": "src/main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "electron": "^35.3.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.pgbridge.app",
+    "productName": "PgBridge",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "ui/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/postgres",
+        "to": "postgres",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PgBridge</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="bg-shape bg-shape-a"></div>
+    <div class="bg-shape bg-shape-b"></div>
+
+    <main class="panel">
+      <header class="panel-header">
+        <h1>PgBridge</h1>
+        <p>Migrate PostgreSQL data safely between environments.</p>
+      </header>
+
+      <div class="field-grid">
+        <label class="field" for="sourceUrl">
+          <span>Source Database URL</span>
+          <input
+            id="sourceUrl"
+            type="password"
+            autocomplete="off"
+            placeholder="postgresql://user:password@host:5432/source_db"
+          />
+        </label>
+
+        <label class="field" for="targetUrl">
+          <span>Target Database URL</span>
+          <input
+            id="targetUrl"
+            type="password"
+            autocomplete="off"
+            placeholder="postgresql://user:password@host:5432/target_db"
+          />
+        </label>
+      </div>
+
+      <div class="action-row">
+        <button id="migrateButton" type="button">Migrate</button>
+        <span id="progressBadge" class="progress-badge">Idle</span>
+      </div>
+
+      <p id="statusText" class="status-text status-info">Ready.</p>
+
+      <section id="statusLog" class="status-log" aria-live="polite"></section>
+    </main>
+
+    <div id="warningModal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <h2>Target Database Is Not Empty</h2>
+        <p>This operation will delete existing data on the target database. Continue?</p>
+        <div class="modal-actions">
+          <button id="cancelButton" class="btn-secondary" type="button">Cancel</button>
+          <button id="confirmButton" class="btn-danger" type="button">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../src/renderer.js"></script>
+  </body>
+</html>
